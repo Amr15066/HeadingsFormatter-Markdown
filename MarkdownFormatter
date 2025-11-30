@@ -1,0 +1,39 @@
+import os
+import sys
+import logging
+
+script_directory = os.path.dirname(os.path.abspath(__file__))
+log_file = os.path.join(script_directory, "logfile.log")
+
+logging.basicConfig(
+    filename=r'C:\Users\Amr\Desktop\Test program\logfile.log',         # Log file name
+    filemode='a',                   # Append to the log file, 'w' to overwrite
+    format='%(asctime)s - %(levelname)s - %(message)s',  # Log format
+    datefmt='%Y-%m-%d %H:%M:%S',    # Date format
+    level=logging.INFO              # Log level
+)
+
+folder_path = script_directory
+mo3gam = dict([(1, "# "), (2, "## "), (3, "### "), (4, "#### "), (5, "##### "), (6, "###### ") ])
+# List all files in the given folder
+for dirpath, dirnames, filenames in os.walk(folder_path): # 3 elements in each tuple, last element contains ALL files in that sub directory
+    for filename in filenames: #loops every file in the last tuple element, (outputting 1 then 2 then 3 instead of outputting [1,2,3])
+        if filename.lower().endswith('.md'):
+            old_list= [] 
+            filepath= os.path.join(dirpath, filename) #writing filepath, which is a combination of the directory (first tuple) and filename
+            try: 
+                with open(filepath, "r", encoding="utf-8") as file:
+                    filedata = file.readlines() #changed from read() to readlines() to read line by line
+                for i in range(1, 7): #looking for headings 1 through 6
+                    if any(line.startswith(mo3gam[i]) for line in filedata): #checking for instances of eaceh heading and adding them to list
+                        old_list.append(i)
+                logging.info(f'Headings Extraction complete for {filename}, Current Headings: {old_list}')
+                for i in range(len(old_list)):
+                    filedata = [line.replace(mo3gam[old_list[i]], mo3gam[i+1]) if line.startswith(mo3gam[old_list[i]]) else line for line in filedata]
+                    # 5 lines of code in one, 
+                with open(filepath, "w", encoding="utf-8") as file:
+                    file.writelines(filedata)
+                    logging.info(f'Processed and saved: {filename}')
+            except Exception as e:
+                # Log any error that occurs during processing
+                logging.error(f'Error processing file {filepath}: {e}')
